@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>項目登録</title>
+</head>
+<body>
+    <h1>項目の登録（設定）</h1>
+    <a href="/">メニューに戻る</a>
+    <hr>
+
+    <h3>新しい項目を追加する</h3>
+    <form method="post">
+        項目名：<input type="text" name="name" placeholder="例：食費" required>
+        <select name="type">
+            <option value="0">支出</option>
+            <option value="1">収入</option>
+        </select>
+        <button type="submit">登録</button>
+    </form>
+
+    <hr>
+    <h3>現在の登録済み項目</h3>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>項目名</th>
+            <th>タイプ</th>
+            <th>操作</th> <!-- 列を追加 -->
+        </tr>
+        {% for cat in categories %}
+        <tr>
+            <td>{{ cat[0] }}</td>
+            <td>{{ cat[1] }}</td>
+            <td>{{ "収入" if cat[2] == 1 else "支出" }}</td>
+            <td>
+                <!-- 削除ボタン（確認ダイアログ付き） -->
+                <a href="{{ url_for('category_delete', id=cat[0]) }}" 
+                   onclick="return confirm('この項目を非表示にしますか？（過去のデータは消えません）');"
+                   style="color: red;">
+                   削除
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

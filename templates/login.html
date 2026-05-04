@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ログイン</title>
+</head>
+<body>
+    <h1>家計簿アプリにログイン</h1>
+    
+    <!-- 簡易的なエラーメッセージ表示（後でflashなどを使う場合に便利） -->
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST">
+        <div>
+            ユーザー名：<input type="text" name="username" required placeholder="ユーザー名を入力">
+        </div>
+        <div>
+            パスワード：<input type="password" name="password" required placeholder="パスワードを入力">
+        </div>
+        <br>
+        <button type="submit">ログイン</button>
+    </form>
+
+    <hr>
+    <p>はじめてご利用ですか？</p>
+    <a href="{{ url_for('register') }}">新規ユーザー登録はこちら</a>
+</body>
+</html>

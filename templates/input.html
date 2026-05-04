@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>収支入力</title>
+</head>
+<body>
+    <h1>収入・支出の入力</h1>
+    <a href="/">メニューに戻る</a>
+    <hr>
+
+    <form method="post">
+        日付：<input type="text" name="date" placeholder="2026-05-02" required><br><br>
+        
+        項目：
+        <select name="category_id">
+            {% for cat in categories %}
+            <!-- valueにIDを入れることで、SQLの保存を楽にします -->
+            <option value="{{ cat[0] }}">
+                {{ cat[1] }} （{{ "収入" if cat[2] == 1 else "支出" }}）
+            </option>
+            {% endfor %}
+        </select><br><br>
+        
+        金額：<input type="number" name="amount" required> 円<br><br>
+        
+        <button type="submit">保存する</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>家計簿アプリ - メニュー</title>
+</head>
+<body>
+    <h1>💰 家計簿アプリ</h1>
+    <hr>
+    
+    <h2>メインメニュー</h2>
+    <ul>
+        <li><strong>A. 収支の管理</strong>
+            <ul>
+                <li><a href="/input">収入・支出を入力する</a></li>
+                <li><a href="/list">入力内容を確認・削除する</a></li>
+            </ul>
+        </li>
+        <li><strong>B. 設定</strong>
+            <ul>
+                <li><a href="/category">項目（カテゴリ）を登録する</a></li>
+            </ul>
+        </li>
+        <li><strong>C. 集計・レポート</strong>
+            <ul>
+                <li><a href="/summary_month">今月の集計</a></li>
+                <li><a href="/summary_period_input">期間を指定して集計</a></li>
+            </ul>
+        </li>
+    </ul>
+
+    <a href="{{ url_for('logout') }}">ログアウト</a>
+
+</body>
+</html>
