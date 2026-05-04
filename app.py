@@ -1,19 +1,23 @@
 import os
 import sqlite3
+import matplotlib
+# Render(Linux)環境でグラフを表示するための設定
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+app.secret_key = 'your_secret_key_12345' # セッション用の秘密鍵
 
-DATABASE = 'kakeibo.db'
+# データベース名を以前と変えることで、古いデータとの衝突を避けます
+DATABASE = 'kakeibo_v3.db'
 
 def get_db():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
 
-# 起動時に一度だけ実行され、必要なテーブルをすべて作成する関数
+# テーブルを自動作成する関数
 def init_db():
     conn = get_db()
     cur = conn.cursor()
@@ -47,6 +51,10 @@ def init_db():
     ''')
     conn.commit()
     conn.close()
+    print("Database initialized successfully.")
+
+# ★最重要：関数の外で実行することで、起動時に必ずテーブルが作られるようにします
+init_db()
 
 # --- A: ログイン・ユーザー登録関連 ---
 
@@ -154,29 +162,6 @@ def list_view():
     conn.close()
     return render_template('list.html', transactions=data)
 
-@app.route('/delete/<int:id>')
-def input_delete(id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    user_id = session['user_id']
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute('DELETE FROM transactions WHERE id = ? AND user_id = ?', (id, user_id))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('list_view'))
-
-@app.route('/category_delete/<int:id>')
-def category_delete(id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute('UPDATE categories SET is_active = 0 WHERE id = ? AND user_id = ?', (id, session['user_id']))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('category'))
-
 # --- C: 集計・グラフ関連 ---
 
 @app.route('/summary_month')
@@ -186,6 +171,7 @@ def summary_month():
     user_id = session['user_id']
     conn = get_db()
     cur = conn.cursor()
+    # 2026年5月で固定（必要に応じて変更）
     target_month = "2026-05" 
     cur.execute('''
         SELECT c.name, SUM(t.amount)
@@ -198,53 +184,23 @@ def summary_month():
     conn.close()
     if not data:
         return "今月のデータがありません。<a href='/'>戻る</a>"
+    
     labels = [row[0] for row in data]
     values = [row[1] for row in data]
     plt.figure(figsize=(6, 6))
     plt.pie(values, labels=labels, autopct='%1.1f%%', startangle=90)
     plt.title(f'User:{session["username"]} - {target_month}')
-    if not os.path.exists('static'): os.makedirs('static')
+    
+    if not os.path.exists('static'):
+        os.makedirs('static')
     graph_path = os.path.join('static', 'graph.png')
     plt.savefig(graph_path)
     plt.close()
+    
     return render_template('summary.html', month=target_month, data=data, graph_url=graph_path)
-
-@app.route('/summary_period_input', methods=['GET', 'POST'])
-def sum_period():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    user_id = session['user_id']
-    if request.method == 'POST':
-        start_date = request.form.get('start_date')
-        end_date = request.form.get('end_date')
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute('''
-            SELECT c.name, SUM(t.amount)
-            FROM transactions t
-            JOIN categories c ON t.category_id = c.id
-            WHERE t.user_id = ? AND t.date BETWEEN ? AND ?
-            GROUP BY c.name
-        ''', (user_id, start_date, end_date))
-        data = cur.fetchall()
-        conn.close()
-        if not data:
-            return "指定された期間にデータはありません。<a href='/summary_period_input'>戻る</a>"
-        labels = [row[0] for row in data]
-        values = [row[1] for row in data]
-        plt.figure(figsize=(6, 6))
-        plt.pie(values, labels=labels, autopct='%1.1f%%', startangle=90)
-        plt.title(f'User:{session["username"]} ({start_date} - {end_date})')
-        if not os.path.exists('static'): os.makedirs('static')
-        graph_path = os.path.join('static', 'period_graph.png')
-        plt.savefig(graph_path)
-        plt.close()
-        return render_template('summary_period_result.html', start=start_date, end=end_date, data=data, graph_url=graph_path)
-    return render_template('summary_period_input.html')
 
 # --- サーバー起動設定 ---
 
 if __name__ == '__main__':
-    init_db()  # ここでテーブルを作成
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
